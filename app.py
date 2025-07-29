@@ -1,7 +1,7 @@
 from flask import Flask, request, send_file, render_template
 import os, uuid, soundfile as sf
 import numpy as np
-from audiomentations import Compose, AddGaussianNoise, ApplyImpulseResponse, Gain, Shift, PitchShift, HighPassFilter
+from audiomentations import Compose, Gain, Shift, PitchShift, HighPassFilter
 
 app = Flask(__name__)
 os.makedirs("temp", exist_ok=True)
@@ -16,32 +16,29 @@ AUG = Compose([
 def apply_8d_effect(input_path, output_path):
     audio, sr = sf.read(input_path)
     if audio.ndim == 1:
-        audio = np.stack([audio, audio], axis=0)  # make stereo
+        audio = np.stack([audio, audio], axis=0).T
     elif audio.shape[1] == 1:
         audio = np.concatenate([audio, audio], axis=1)
 
-    # Simulate auto-panning by flipping channels slowly
-    pan_envelope = np.linspace(-1, 1, audio.shape[0])
-    audio[:, 0] *= (1 - pan_envelope) / 2  # left
-    audio[:, 1] *= (1 + pan_envelope) / 2  # right
+    pan = np.linspace(-1, 1, audio.shape[0])
+    audio[:, 0] *= (1 - pan) / 2
+    audio[:, 1] *= (1 + pan) / 2
 
-    # Apply reverb/pitch/etc
-    audio = AUG(samples=audio, sample_rate=sr)
-
-    sf.write(output_path, audio, sr)
+    processed = AUG(samples=audio, sample_rate=sr)
+    sf.write(output_path, processed, sr)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         file = request.files["audio"]
         if not file:
-            return "No file"
+            return "No file uploaded", 400
 
         uid = str(uuid.uuid4())
-        input_path = f"temp/{uid}_in.wav"
-        output_path = f"temp/{uid}_out.wav"
-
+        input_path = f"temp/{uid}_input.wav"
+        output_path = f"temp/{uid}_output.wav"
         file.save(input_path)
+
         apply_8d_effect(input_path, output_path)
         return send_file(output_path, as_attachment=True)
 
