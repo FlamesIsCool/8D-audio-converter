@@ -1,0 +1,24 @@
+body {
+  background: #111;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
+  padding-top: 100px;
+}
+.container {
+  background: #1a1a1a;
+  padding: 40px;
+  border-radius: 20px;
+  display: inline-block;
+}
+input[type="file"] {
+  margin-bottom: 20px;
+}
+button {
+  background: #00ff88;
+  color: black;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
