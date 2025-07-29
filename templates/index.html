@@ -1,16 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>8D Audio Converter</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 20px;
+    }
+    form {
+      background: #1c1c1c;
+      padding: 20px 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0, 255, 150, 0.15);
+    }
+    input[type="file"] {
+      background: #000;
+      border: 1px solid #555;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    button {
+      background: #00ff99;
+      color: #000;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #00cc7a;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎧 Convert Audio to 8D</h1>
-    <form method="POST" enctype="multipart/form-data">
-      <input type="file" name="audio" accept="audio/*" required>
-      <button type="submit">Convert</button>
-    </form>
-  </div>
+  <h1>🎧 Convert to 8D Audio</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <input type="file" name="audio" accept=".wav,.mp3,.m4a,.ogg" required><br>
+    <button type="submit">Convert</button>
+  </form>
 </body>
 </html>
