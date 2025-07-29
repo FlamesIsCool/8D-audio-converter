@@ -1,4 +1,5 @@
 Flask
 audiomentations
-numpy
+librosa
 soundfile
+numpy
