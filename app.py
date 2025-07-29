@@ -1,23 +1,18 @@
 from flask import Flask, request, render_template, send_file
-from pydub import AudioSegment
-import os, math, uuid, subprocess
+import os, uuid, subprocess
 
 app = Flask(__name__)
+os.makedirs("temp", exist_ok=True)
 
-def apply_auto_pan(audio, freq=0.08, amount=0.85, step_ms=50):
-    result = []
-    steps = len(audio) // step_ms
-    for i in range(steps):
-        pan = amount * math.sin(2 * math.pi * freq * (i * step_ms / 1000))
-        segment = audio[i * step_ms:(i + 1) * step_ms].pan(pan)
-        result.append(segment)
-    return sum(result)
-
-def apply_reverb(input_path, output_path):
-    subprocess.run([
-        "sox", input_path, output_path,
-        "reverb", "50", "100", "50", "0", "100", "0"
-    ], check=True)
+def process_audio_ffmpeg(input_path, output_path):
+    # Apply auto-pan and reverb using FFmpeg
+    command = [
+        "ffmpeg", "-y", "-i", input_path,
+        "-af",
+        "apad,pan=stereo|c0=0.5*FL+0.5*FR|c1=0.5*FL-0.5*FR,asetrate=44100*0.999,aresample=44100,aecho=0.8:0.88:60:0.4",
+        output_path
+    ]
+    subprocess.run(command, check=True)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -26,17 +21,13 @@ def index():
         if not file: return "No file uploaded"
 
         uid = str(uuid.uuid4())
-        panned = f"temp/{uid}_panned.wav"
-        final = f"temp/{uid}_8d.wav"
+        input_path = f"temp/{uid}_in.wav"
+        output_path = f"temp/{uid}_out.wav"
 
-        os.makedirs("temp", exist_ok=True)
-        audio = AudioSegment.from_file(file).set_channels(2)
-        audio = apply_auto_pan(audio)
-        audio.export(panned, format="wav")
-        apply_reverb(panned, final)
+        file.save(input_path)
+        process_audio_ffmpeg(input_path, output_path)
 
-        os.remove(panned)
-        return send_file(final, as_attachment=True)
+        return send_file(output_path, as_attachment=True)
 
     return render_template("index.html")
 
