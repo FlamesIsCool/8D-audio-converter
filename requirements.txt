@@ -1,1 +1,6 @@
 Flask
+audiomentations
+soundfile
+numpy
+scipy
+librosa
