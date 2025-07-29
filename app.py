@@ -1,5 +1,5 @@
 from flask import Flask, request, send_file, render_template
-from audiomentations import Compose, AddImpulseResponse, Gain, ApplyImpulseResponse, PolarityInversion, Shift
+from audiomentations import Compose, Gain, RoomSimulator, Rotate
 from audiomentations import RoomSimulator, Rotate
 import soundfile as sf
 import numpy as np
@@ -15,10 +15,11 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # Define 8D-style audio effects
 augment = Compose([
-    Rotate(rotation_rate=0.08, p=1.0),  # Simulates auto-panning (8D movement)
+    Rotate(rotation_rate=0.08, p=1.0),  # Simulates 8D movement
     Gain(min_gain_db=-5.0, max_gain_db=5.0, p=1.0),
-    RoomSimulator(p=1.0)
+    RoomSimulator(p=1.0)  # Simulates reverb / space
 ])
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
