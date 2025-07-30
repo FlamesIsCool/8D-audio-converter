@@ -731,13 +731,20 @@
             // Convert button click
             convertBtn.addEventListener('click', () => {
                 if (!selectedFile) return;
+                
+                // Show loading state
 
                 btnText.classList.add('hidden');
                 btnLoading.classList.remove('hidden');
                 convertBtn.disabled = true;
+                
+                // Show processing section
 
                 processingSection.classList.remove('hidden');
                 downloadSection.classList.add('hidden');
+                
+                // Simulate processing
+                simulateProcessing();
                 previewAudio.classList.add('hidden');
 
                 const formData = new FormData();
@@ -770,7 +777,16 @@
                         processingSection.classList.add('hidden');
                         downloadSection.classList.remove('hidden');
                     } else {
-                        alert('Conversion failed');
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            try {
+                                const data = JSON.parse(reader.result);
+                                alert(data.error || 'Conversion failed');
+                            } catch {
+                                alert('Conversion failed');
+                            }
+                        };
+                        reader.readAsText(xhr.response);
                     }
                 };
 
