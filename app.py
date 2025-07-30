@@ -32,7 +32,6 @@ def convert_audio():
             'gain', '-n'
         ]
 
-        subprocess.run(cmd, check=True)
         try:
             subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError:
