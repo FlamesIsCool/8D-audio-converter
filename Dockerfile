@@ -1,6 +1,9 @@
 FROM python:3.11-slim
 
-RUN apt-get update && apt-get install -y sox && apt-get clean
+RUN apt-get update \
+    && apt-get install -y sox libsox-fmt-all \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
