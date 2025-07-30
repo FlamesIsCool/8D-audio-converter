@@ -1,5 +1,8 @@
 from flask import Flask, request, send_file, render_template
-import os, tempfile, subprocess
+import os
+import shutil
+import subprocess
+import tempfile
 
 app = Flask(__name__)
 
@@ -11,6 +14,9 @@ def index():
 def convert_audio():
     if 'file' not in request.files:
         return {'error': 'No file provided'}, 400
+
+    if shutil.which('sox') is None:
+        return {'error': 'SoX is not installed on the server'}, 500
 
     audio_file = request.files['file']
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -27,6 +33,11 @@ def convert_audio():
         ]
 
         subprocess.run(cmd, check=True)
+        try:
+            subprocess.run(cmd, check=True)
+        except subprocess.CalledProcessError:
+            return {'error': 'Audio processing failed'}, 500
+
         return send_file(output_path, as_attachment=True, download_name='8d_audio.wav')
 
 if __name__ == '__main__':
