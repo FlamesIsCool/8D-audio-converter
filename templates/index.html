@@ -512,6 +512,7 @@
                         </div>
                     </div>
                 </div>
+                <audio id="preview-audio" controls class="w-full mt-4 hidden"></audio>
             </div>
         </div>
         
@@ -626,10 +627,12 @@
             const donationBtn = document.getElementById('donation-btn');
             const mainPage = document.getElementById('main-page');
             const donationPage = document.getElementById('donation-page');
-            const backBtn = document.getElementById('back-btn');
-            
-            let selectedFile = null;
-            let processingInterval;
+    const backBtn = document.getElementById('back-btn');
+    const previewAudio = document.getElementById('preview-audio');
+
+    let selectedFile = null;
+    let downloadUrl = null;
+    let processingInterval;
             
             // Animate waveform
             const waveformBars = document.querySelectorAll('.waveform-bar');
@@ -713,71 +716,91 @@
                 convertBtn.disabled = true;
                 processingSection.classList.add('hidden');
                 downloadSection.classList.add('hidden');
-                
+                previewAudio.classList.add('hidden');
+
+                if (downloadUrl) {
+                    URL.revokeObjectURL(downloadUrl);
+                    downloadUrl = null;
+                }
                 if (processingInterval) {
                     clearInterval(processingInterval);
                 }
             });
             
-            // Simulate processing progress
-            const simulateProcessing = () => {
-                let progress = 0;
-                let seconds = 30;
-                
-                processingInterval = setInterval(() => {
-                    progress += 1;
-                    seconds -= 1;
-                    
-                    if (progress > 100) {
-                        clearInterval(processingInterval);
-                        return;
-                    }
-                    
-                    progressBar.style.width = `${progress}%`;
-                    progressPercent.textContent = `${progress}%`;
-                    
-                    const min = Math.floor(seconds / 60);
-                    const sec = seconds % 60;
-                    timeRemaining.textContent = `${min}:${sec < 10 ? '0' + sec : sec}`;
-                    
-                    if (progress >= 100) {
-                        clearInterval(processingInterval);
-                        processingSection.classList.add('hidden');
-                        downloadSection.classList.remove('hidden');
-                        btnText.classList.remove('hidden');
-                        btnLoading.classList.add('hidden');
-                        convertBtn.disabled = false;
-                    }
-                }, 300);
-            };
             
             // Convert button click
             convertBtn.addEventListener('click', () => {
                 if (!selectedFile) return;
-                
-                // Show loading state
+
                 btnText.classList.add('hidden');
                 btnLoading.classList.remove('hidden');
                 convertBtn.disabled = true;
-                
-                // Show processing section
+
                 processingSection.classList.remove('hidden');
                 downloadSection.classList.add('hidden');
-                
-                // Simulate processing
-                simulateProcessing();
+                previewAudio.classList.add('hidden');
+
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/convert');
+                xhr.responseType = 'blob';
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        const percent = Math.round((e.loaded / e.total) * 50);
+                        progressBar.style.width = percent + '%';
+                        progressPercent.textContent = percent + '%';
+                    }
+                };
+
+                xhr.onload = () => {
+                    btnText.classList.remove('hidden');
+                    btnLoading.classList.add('hidden');
+                    convertBtn.disabled = false;
+
+                    if (xhr.status === 200) {
+                        if (downloadUrl) {
+                            URL.revokeObjectURL(downloadUrl);
+                        }
+                        downloadUrl = URL.createObjectURL(xhr.response);
+                        progressBar.style.width = '100%';
+                        progressPercent.textContent = '100%';
+                        processingSection.classList.add('hidden');
+                        downloadSection.classList.remove('hidden');
+                    } else {
+                        alert('Conversion failed');
+                    }
+                };
+
+                xhr.onerror = () => {
+                    btnText.classList.remove('hidden');
+                    btnLoading.classList.add('hidden');
+                    convertBtn.disabled = false;
+                    alert('Conversion failed');
+                };
+
+                xhr.send(formData);
             });
             
             // Download button click
             downloadBtn.addEventListener('click', () => {
-                // In a real app, this would download the actual converted file
-                alert('In a real 8D audio converter, this would download your processed file. This is just a UI demo.');
+                if (!downloadUrl) return;
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = '8d_audio.wav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             });
-            
+
             // Preview button click
             previewBtn.addEventListener('click', () => {
-                // In a real app, this would play a preview of the converted audio
-                alert('In a real 8D audio converter, this would play a preview of your processed file. This is just a UI demo.');
+                if (!downloadUrl) return;
+                previewAudio.src = downloadUrl;
+                previewAudio.classList.remove('hidden');
+                previewAudio.play();
             });
             
             // Donation button click
