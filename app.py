@@ -1,9 +1,11 @@
-from flask import Flask, request, send_file
-import os
-import tempfile
-import subprocess
+from flask import Flask, request, send_file, render_template
+import os, tempfile, subprocess
 
 app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')  # this shows your HTML
 
 @app.route('/convert', methods=['POST'])
 def convert_audio():
@@ -11,17 +13,12 @@ def convert_audio():
         return {'error': 'No file provided'}, 400
 
     audio_file = request.files['file']
-    filename = audio_file.filename
-
     with tempfile.TemporaryDirectory() as tmpdir:
-        input_path = os.path.join(tmpdir, filename)
+        input_path = os.path.join(tmpdir, 'input.wav')
         output_path = os.path.join(tmpdir, 'output_8d.wav')
-
-        # Save uploaded file
         audio_file.save(input_path)
 
-        # Apply SoX effects for 8D simulation
-        sox_cmd = [
+        cmd = [
             'sox', input_path, output_path,
             'remix', '1,2',
             'reverb', '50', '50', '100', '50', '0', '100',
@@ -29,16 +26,8 @@ def convert_audio():
             'gain', '-n'
         ]
 
-        try:
-            subprocess.run(sox_cmd, check=True)
-        except subprocess.CalledProcessError:
-            return {'error': 'Audio processing failed'}, 500
-
+        subprocess.run(cmd, check=True)
         return send_file(output_path, as_attachment=True, download_name='8d_audio.wav')
-
-@app.route('/')
-def health():
-    return '8D Audio Converter Backend Running'
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
