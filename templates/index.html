@@ -1,54 +1,810 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>8D Audio Converter</title>
-  <style>
-    body {
-      background: #0d0d0d;
-      color: white;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      flex-direction: column;
-    }
-    h1 {
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
-    form {
-      background: #1a1a1a;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px #00ffbb22;
-    }
-    input[type="file"], input[type="submit"] {
-      margin-top: 10px;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      font-size: 1em;
-    }
-    input[type="submit"] {
-      background: #00ffbb;
-      color: #000;
-      cursor: pointer;
-      margin-top: 20px;
-      transition: 0.3s;
-    }
-    input[type="submit"]:hover {
-      background: #00cc99;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8D Audio Converter | Premium Experience</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent-white: #ffffff;
+            --deep-black: #000000;
+            --gray-100: #f7f7f7;
+            --gray-200: #e5e5e5;
+            --gray-300: #d4d4d4;
+            --gray-400: #a3a3a3;
+            --gray-500: #737373;
+            --gray-600: #525252;
+            --gray-700: #404040;
+            --gray-800: #262626;
+            --gray-900: #171717;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--deep-black);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .playfair {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .premium-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+        }
+        
+        .white-glow {
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+        }
+        
+        .upload-area {
+            border: 1px dashed rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: var(--accent-white);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .convert-btn {
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .convert-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+        }
+        
+        .convert-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .donation-btn {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .donation-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        
+        .donation-btn:hover::before {
+            left: 100%;
+        }
+        
+        .donation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            animation: spin 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .float {
+            animation: float 5s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+        }
+        
+        .cat-logo {
+            animation: float 6s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        }
+        
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            pointer-events: none;
+            opacity: 0.035;
+            z-index: 100;
+        }
+        
+        .grain:before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 150px;
+        }
+        
+        .gradient-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(40, 40, 40, 0.3) 0%, rgba(0, 0, 0, 0.6) 100%);
+            z-index: -1;
+        }
+        
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -2;
+        }
+        
+        .blob-1 {
+            top: 10%;
+            left: 15%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .blob-2 {
+            bottom: 10%;
+            right: 15%;
+            width: 400px;
+            height: 400px;
+            background: rgba(200, 200, 200, 0.8);
+        }
+        
+        .progress-bar {
+            height: 2px;
+            background: linear-gradient(to right, rgba(255,255,255,0.2), rgba(255,255,255,1), rgba(255,255,255,0.2));
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {background-position: 100% 0;}
+            100% {background-position: -100% 0;}
+        }
+        
+        .btn-hover-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-hover-effect:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn-hover-effect:hover:after {
+            left: 100%;
+        }
+        
+        .waveform {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+        
+        .waveform-bar {
+            width: 2px;
+            background-color: white;
+            border-radius: 6px;
+            transition: height 0.2s ease;
+        }
+        
+        @keyframes wave {
+            0%, 100% { height: 8px; }
+            50% { height: 25px; }
+        }
+        
+        .heartbeat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.1); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.1); }
+            70% { transform: scale(1); }
+        }
+        
+        .social-icon {
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.2);
+        }
+        
+        .donation-modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .donation-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .handwritten {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+        }
+        
+        .highlight-text {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .highlight-text::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30%;
+            background-color: rgba(255, 255, 255, 0.1);
+            z-index: -1;
+            transform: skewX(-15deg);
+        }
+        
+        .twitter-hover:hover {
+            color: #1DA1F2;
+        }
+        
+        .coffee-hover:hover {
+            color: #FFDD00;
+        }
+        
+        .donation-page {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .donation-page.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .main-page {
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        
+        .main-page.hidden {
+            display: none;
+            opacity: 0;
+        }
+        
+        .back-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            transform: translateX(-3px);
+        }
+        
+        .heart-icon {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .quote-marks {
+            font-size: 4rem;
+            line-height: 0;
+            position: relative;
+            top: 20px;
+            opacity: 0.2;
+        }
+    </style>
 </head>
-<body>
-  <h1>Convert to 8D Audio</h1>
-  <form action="/" method="post" enctype="multipart/form-data">
-    <input type="file" name="audio" accept="audio/*" required><br>
-    <input type="submit" value="Convert to 8D">
-  </form>
-</body>
+<body class="flex flex-col items-center justify-center p-4">
+    <!-- Grain Effect -->
+    <div class="grain"></div>
+    
+    <!-- Background Elements -->
+    <div class="gradient-bg"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    
+    <!-- Cat Logo -->
+    <div class="absolute top-8 left-8 cat-logo z-10">
+        <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M35,60 C35,54.5 39.5,50 45,50 C50.5,50 55,54.5 55,60" stroke="white" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="30" cy="40" r="5" fill="white"/>
+            <circle cx="70" cy="40" r="5" fill="white"/>
+            <path d="M15,40 C15,20 30,10 50,10 C70,10 85,20 85,40 C85,60 70,90 50,90 C30,90 15,60 15,40 Z" stroke="white" stroke-width="3" fill="none"/>
+            <path d="M0,30 C10,25 15,35 15,40" stroke="white" stroke-width="3" fill="none"/>
+            <path d="M100,30 C90,25 85,35 85,40" stroke="white" stroke-width="3" fill="none"/>
+        </svg>
+    </div>
+
+    <!-- Social Links -->
+    <div class="absolute top-8 right-8 flex items-center space-x-4 z-10">
+        <a href="https://x.com/O2Flames" target="_blank" class="social-icon twitter-hover">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+        </a>
+        <a href="https://buymeacoffee.com/aura2" target="_blank" class="social-icon coffee-hover">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.65-.118.299-.033.598-.073.896-.119.352-.054.578-.513.474-.834-.124-.383-.457-.531-.834-.473-.466.074-.96.108-1.382.146-1.177.08-2.358.082-3.536.006a22.228 22.228 0 01-1.157-.107c-.086-.01-.18-.025-.258-.036-.243-.036-.484-.08-.724-.13-.111-.027-.111-.185 0-.212h.005c.277-.06.557-.108.838-.147h.002c.131-.009.263-.032.394-.048a25.076 25.076 0 013.426-.12c.674.019 1.347.067 2.017.144l.228.031c.267.04.533.088.798.145.392.085.895.113 1.07.542.055.137.08.288.111.431l.319 1.484a.237.237 0 01-.199.284h-.003c-.037.006-.075.01-.112.015a36.704 36.704 0 01-4.743.295 37.059 37.059 0 01-4.699-.304c-.14-.017-.293-.042-.417-.06-.326-.048-.649-.108-.973-.161-.393-.065-.768-.032-1.123.161-.29.16-.527.404-.675.701-.154.316-.199.66-.267 1-.069.34-.176.707-.135 1.056.087.753.613 1.365 1.37 1.502a39.69 39.69 0 0011.343.376.483.483 0 01.535.53l-.071.697-1.018 9.907c-.041.41-.047.832-.125 1.237-.122.637-.553 1.028-1.182 1.171-.577.131-1.165.2-1.756.205-.656.004-1.31-.025-1.966-.022-.699.004-1.556-.06-2.095-.58-.475-.458-.54-1.174-.605-1.793l-.731-7.013-.322-3.094c-.037-.351-.286-.695-.678-.678-.336.015-.718.3-.678.679l.228 2.185.949 9.112c.147 1.344 1.174 2.068 2.446 2.272.742.12 1.503.144 2.257.156.966.016 1.942.053 2.892-.122 1.408-.258 2.465-1.198 2.616-2.657.34-3.332.683-6.663 1.024-9.995l.215-2.087a.484.484 0 01.39-.426c.402-.078.787-.212 1.074-.518.455-.488.546-1.124.385-1.766zm-1.478.772c-.145.137-.363.201-.578.233-2.416.359-4.866.54-7.308.46-1.748-.06-3.477-.254-5.207-.498-.17-.024-.353-.055-.47-.18-.22-.236-.111-.71-.054-.995.052-.26.152-.609.463-.646.484-.057 1.046.148 1.526.22.577.088 1.156.159 1.737.212 2.48.226 5.002.19 7.472-.14.45-.06.899-.13 1.345-.21.399-.072.84-.206 1.08.206.166.281.188.657.162.974a.544.544 0 01-.169.364zm-6.159 3.9c-.862.37-1.84.788-3.109.788a5.884 5.884 0 01-1.569-.217l.877 9.004c.065.78.717 1.38 1.5 1.38 0 0 1.243.065 1.658.065.447 0 1.786-.065 1.786-.065.783 0 1.434-.6 1.499-1.38l.94-9.95a3.996 3.996 0 00-1.322-.238c-.826 0-1.491.284-2.26.613z"/>
+            </svg>
+        </a>
+    </div>
+
+    <!-- Main Page -->
+    <div id="main-page" class="main-page container max-w-xl mx-auto flex flex-col items-center justify-center min-h-screen py-16 relative z-10">
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight playfair">
+                <span class="inline-block">🎧</span> <span class="gradient-text">8D Audio Converter</span>
+            </h1>
+            <p class="text-gray-400 text-sm md:text-base max-w-md mx-auto">Transform your audio into an immersive spatial experience that moves around your head</p>
+        </div>
+        
+        <div class="w-full premium-card rounded-3xl p-8 flex flex-col items-center">
+            <!-- Upload Area -->
+            <div id="upload-area" class="upload-area w-full h-48 rounded-2xl flex flex-col items-center justify-center p-6 mb-8 cursor-pointer group">
+                <div class="mb-4 p-4 rounded-full bg-white/5 group-hover:bg-white/10 transition-all duration-300">
+                    <svg class="w-8 h-8 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+                <p class="text-white/90 font-medium">Drag & drop audio file</p>
+                <p class="text-gray-500 mt-2">or <span class="text-white underline underline-offset-4 cursor-pointer">browse files</span></p>
+                <p class="text-gray-600 text-xs mt-3">Supports MP3, WAV</p>
+                <input type="file" id="file-input" class="hidden" accept=".mp3,.wav">
+            </div>
+            
+            <!-- File Info (Hidden initially) -->
+            <div id="file-info" class="w-full mb-8 hidden">
+                <div class="premium-card rounded-2xl p-5 flex items-center">
+                    <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p id="file-name" class="text-sm font-medium text-white truncate"></p>
+                        <div class="flex items-center mt-1">
+                            <div class="waveform mr-3">
+                                <div class="waveform-bar" style="height: 15px;"></div>
+                                <div class="waveform-bar" style="height: 20px;"></div>
+                                <div class="waveform-bar" style="height: 10px;"></div>
+                                <div class="waveform-bar" style="height: 18px;"></div>
+                                <div class="waveform-bar" style="height: 12px;"></div>
+                                <div class="waveform-bar" style="height: 22px;"></div>
+                                <div class="waveform-bar" style="height: 8px;"></div>
+                                <div class="waveform-bar" style="height: 16px;"></div>
+                            </div>
+                            <p id="file-size" class="text-xs text-gray-500"></p>
+                        </div>
+                    </div>
+                    <button id="remove-file" class="ml-2 p-2 rounded-full hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Convert Button -->
+            <button id="convert-btn" class="convert-btn btn-hover-effect w-full py-4 px-6 rounded-xl text-black font-semibold text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300" disabled>
+                <span id="btn-text">CONVERT TO 8D AUDIO</span>
+                <span id="btn-loading" class="hidden flex items-center justify-center">
+                    <svg class="spinner w-5 h-5 mr-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>PROCESSING</span>
+                </span>
+            </button>
+            
+            <!-- Processing Section (Hidden initially) -->
+            <div id="processing-section" class="w-full mt-8 hidden">
+                <div class="premium-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-sm font-medium text-white/90">Processing audio...</p>
+                        <p id="progress-percent" class="text-xs text-gray-400">0%</p>
+                    </div>
+                    <div class="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                        <div id="progress-bar" class="progress-bar w-0 transition-all duration-300"></div>
+                    </div>
+                    <div class="mt-4 flex justify-between text-xs text-gray-500">
+                        <span>Applying spatial effects</span>
+                        <span id="time-remaining">--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Download Section (Hidden initially) -->
+            <div id="download-section" class="w-full mt-8 hidden">
+                <div class="premium-card rounded-2xl p-6">
+                    <div class="flex items-center mb-5">
+                        <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mr-4">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-white font-medium">Conversion Complete</p>
+                            <p class="text-gray-500 text-xs mt-1">Your 8D audio is ready to download</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <button id="download-btn" class="flex-1 bg-white hover:bg-gray-100 text-black py-3 px-4 rounded-xl flex items-center justify-center font-medium transition-all duration-300">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Download
+                        </button>
+                        <button id="preview-btn" class="flex-1 bg-transparent border border-white/20 hover:border-white/40 text-white py-3 px-4 rounded-xl flex items-center justify-center font-medium transition-all duration-300">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Preview
+                        </button>
+                    </div>
+                    
+                    <div class="mt-5 pt-5 border-t border-white/10">
+                        <div class="flex justify-between items-center">
+                            <p class="text-xs text-gray-500">Share your creation</p>
+                            <div class="flex space-x-3">
+                                <a href="https://x.com/O2Flames" target="_blank" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                    <svg class="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                    </svg>
+                                </a>
+                                <button class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                    <svg class="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M20 13.5C20 17.09 17.09 20 13.5 20H6V8.5C6 4.91 8.91 2 12.5 2H20V13.5ZM18 4H12.5C10.01 4 8 6.01 8 8.5V18H13.5C15.99 18 18 15.99 18 13.5V4ZM4 6H2V20C2 21.1 2.9 22 4 22H18V20H4V6Z"></path>
+                                    </svg>
+                                </button>
+                                <button class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors">
+                                    <svg class="w-4 h-4 text-white/80" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-12 flex flex-col items-center">
+            <div class="flex items-center mb-6">
+                <div class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center mr-3">
+                    <svg class="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <p class="text-xs text-gray-500">Experience immersive 8D audio that moves around your head using headphones</p>
+            </div>
+            
+            <!-- Donation Button -->
+            <button id="donation-btn" class="donation-btn flex items-center px-6 py-3 rounded-xl text-black font-medium text-sm mt-4 group">
+                <svg class="w-5 h-5 mr-2 heart-icon text-pink-600" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                </svg>
+                Support This Project
+            </button>
+        </div>
+    </div>
+    
+    <!-- Donation Page -->
+    <div id="donation-page" class="donation-page container max-w-2xl mx-auto flex flex-col items-center justify-center min-h-screen py-16 relative z-10">
+        <button id="back-btn" class="back-btn absolute top-8 left-8 flex items-center text-gray-400 hover:text-white">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to converter
+        </button>
+        
+        <div class="w-full premium-card rounded-3xl p-8 md:p-12">
+            <div class="text-center mb-10">
+                <div class="inline-block p-3 rounded-full bg-white/5 mb-6">
+                    <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 playfair">From My Heart to Yours</h2>
+                <p class="text-gray-400 max-w-lg mx-auto">Your support means everything to me and helps keep this project alive</p>
+            </div>
+            
+            <div class="mb-10">
+                <div class="quote-marks playfair text-gray-600">"</div>
+                <p class="text-lg md:text-xl text-gray-300 italic mb-6 playfair leading-relaxed">
+                    Every time I see a donation notification, I literally break down in tears. This isn't just a tool for me—it's my passion project, created during late nights and early mornings. Your support isn't just funding code; it's <span class="highlight-text">fueling dreams</span> and helping me continue building tools that make music more magical for everyone.
+                </p>
+                
+                <p class="text-base text-gray-400 mb-6">
+                    I'm not a big company with investors. I'm just one person who loves audio and wants to share that passion with you. Every dollar helps me keep the servers running, improve the converter, and add new features that I hope will bring joy to your creative process.
+                </p>
+                
+                <p class="text-base text-gray-400">
+                    Thank you for being part of this journey. Your support means more than I can express in words.
+                </p>
+                
+                <div class="flex justify-end mt-4">
+                    <p class="handwritten text-lg text-gray-300">With gratitude,</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-6">
+                <a href="https://buymeacoffee.com/aura2" target="_blank" class="flex-1 bg-white hover:bg-gray-100 text-black py-4 px-6 rounded-xl flex items-center justify-center font-medium transition-all duration-300 group">
+                    <svg class="w-6 h-6 mr-3 text-[#FFDD00] group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.216 6.415l-.132-.666c-.119-.598-.388-1.163-1.001-1.379-.197-.069-.42-.098-.57-.241-.152-.143-.196-.366-.231-.572-.065-.378-.125-.756-.192-1.133-.057-.325-.102-.69-.25-.987-.195-.4-.597-.634-.996-.788a5.723 5.723 0 00-.626-.194c-1-.263-2.05-.36-3.077-.416a25.834 25.834 0 00-3.7.062c-.915.083-1.88.184-2.75.5-.318.116-.646.256-.888.501-.297.302-.393.77-.177 1.146.154.267.415.456.692.58.36.162.737.284 1.123.366 1.075.238 2.189.331 3.287.37 1.218.05 2.437.01 3.65-.118.299-.033.598-.073.896-.119.352-.054.578-.513.474-.834-.124-.383-.457-.531-.834-.473-.466.074-.96.108-1.382.146-1.177.08-2.358.082-3.536.006a22.228 22.228 0 01-1.157-.107c-.086-.01-.18-.025-.258-.036-.243-.036-.484-.08-.724-.13-.111-.027-.111-.185 0-.212h.005c.277-.06.557-.108.838-.147h.002c.131-.009.263-.032.394-.048a25.076 25.076 0 013.426-.12c.674.019 1.347.067 2.017.144l.228.031c.267.04.533.088.798.145.392.085.895.113 1.07.542.055.137.08.288.111.431l.319 1.484a.237.237 0 01-.199.284h-.003c-.037.006-.075.01-.112.015a36.704 36.704 0 01-4.743.295 37.059 37.059 0 01-4.699-.304c-.14-.017-.293-.042-.417-.06-.326-.048-.649-.108-.973-.161-.393-.065-.768-.032-1.123.161-.29.16-.527.404-.675.701-.154.316-.199.66-.267 1-.069.34-.176.707-.135 1.056.087.753.613 1.365 1.37 1.502a39.69 39.69 0 0011.343.376.483.483 0 01.535.53l-.071.697-1.018 9.907c-.041.41-.047.832-.125 1.237-.122.637-.553 1.028-1.182 1.171-.577.131-1.165.2-1.756.205-.656.004-1.31-.025-1.966-.022-.699.004-1.556-.06-2.095-.58-.475-.458-.54-1.174-.605-1.793l-.731-7.013-.322-3.094c-.037-.351-.286-.695-.678-.678-.336.015-.718.3-.678.679l.228 2.185.949 9.112c.147 1.344 1.174 2.068 2.446 2.272.742.12 1.503.144 2.257.156.966.016 1.942.053 2.892-.122 1.408-.258 2.465-1.198 2.616-2.657.34-3.332.683-6.663 1.024-9.995l.215-2.087a.484.484 0 01.39-.426c.402-.078.787-.212 1.074-.518.455-.488.546-1.124.385-1.766zm-1.478.772c-.145.137-.363.201-.578.233-2.416.359-4.866.54-7.308.46-1.748-.06-3.477-.254-5.207-.498-.17-.024-.353-.055-.47-.18-.22-.236-.111-.71-.054-.995.052-.26.152-.609.463-.646.484-.057 1.046.148 1.526.22.577.088 1.156.159 1.737.212 2.48.226 5.002.19 7.472-.14.45-.06.899-.13 1.345-.21.399-.072.84-.206 1.08.206.166.281.188.657.162.974a.544.544 0 01-.169.364zm-6.159 3.9c-.862.37-1.84.788-3.109.788a5.884 5.884 0 01-1.569-.217l.877 9.004c.065.78.717 1.38 1.5 1.38 0 0 1.243.065 1.658.065.447 0 1.786-.065 1.786-.065.783 0 1.434-.6 1.499-1.38l.94-9.95a3.996 3.996 0 00-1.322-.238c-.826 0-1.491.284-2.26.613z"/>
+                    </svg>
+                    Buy me a coffee
+                </a>
+                
+                <a href="https://x.com/O2Flames" target="_blank" class="flex-1 bg-transparent border border-white/20 hover:border-white/40 text-white py-4 px-6 rounded-xl flex items-center justify-center font-medium transition-all duration-300 group">
+                    <svg class="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    Follow me on X
+                </a>
+            </div>
+            
+            <div class="mt-10 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-sm text-gray-500 mb-4 md:mb-0">Thank you for making this possible ❤️</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-sm text-gray-400 hover:text-white transition-colors">Return to converter</a>
+                    <span class="text-gray-700">|</span>
+                    <a href="https://buymeacoffee.com/aura2" target="_blank" class="text-sm text-gray-400 hover:text-white transition-colors">View all supporters</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center">
+            <p class="text-xs text-gray-600">Made with love and countless cups of coffee</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+            const fileSize = document.getElementById('file-size');
+            const removeFile = document.getElementById('remove-file');
+            const convertBtn = document.getElementById('convert-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoading = document.getElementById('btn-loading');
+            const processingSection = document.getElementById('processing-section');
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const timeRemaining = document.getElementById('time-remaining');
+            const downloadSection = document.getElementById('download-section');
+            const downloadBtn = document.getElementById('download-btn');
+            const previewBtn = document.getElementById('preview-btn');
+            const donationBtn = document.getElementById('donation-btn');
+            const mainPage = document.getElementById('main-page');
+            const donationPage = document.getElementById('donation-page');
+            const backBtn = document.getElementById('back-btn');
+            
+            let selectedFile = null;
+            let processingInterval;
+            
+            // Animate waveform
+            const waveformBars = document.querySelectorAll('.waveform-bar');
+            waveformBars.forEach((bar, index) => {
+                bar.style.animation = `wave 1.2s ease-in-out ${index * 0.1}s infinite`;
+            });
+            
+            // Handle file selection
+            const handleFileSelect = (file) => {
+                if (!file) return;
+                
+                // Check if file is audio
+                if (!file.type.match('audio.*')) {
+                    alert('Please select an audio file (MP3 or WAV)');
+                    return;
+                }
+                
+                selectedFile = file;
+                
+                // Display file info
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.classList.remove('hidden');
+                convertBtn.disabled = false;
+                
+                // Reset other sections
+                processingSection.classList.add('hidden');
+                downloadSection.classList.add('hidden');
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0%';
+                timeRemaining.textContent = '--:--';
+            };
+            
+            // Format file size
+            const formatFileSize = (bytes) => {
+                if (bytes < 1024) return bytes + ' bytes';
+                else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                else return (bytes / 1048576).toFixed(1) + ' MB';
+            };
+            
+            // Upload area click
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // File input change
+            fileInput.addEventListener('change', (e) => {
+                handleFileSelect(e.target.files[0]);
+            });
+            
+            // Drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.add('drag-over');
+                });
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.remove('drag-over');
+                });
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                const file = e.dataTransfer.files[0];
+                handleFileSelect(file);
+            });
+            
+            // Remove file
+            removeFile.addEventListener('click', () => {
+                selectedFile = null;
+                fileInput.value = '';
+                fileInfo.classList.add('hidden');
+                convertBtn.disabled = true;
+                processingSection.classList.add('hidden');
+                downloadSection.classList.add('hidden');
+                
+                if (processingInterval) {
+                    clearInterval(processingInterval);
+                }
+            });
+            
+            // Simulate processing progress
+            const simulateProcessing = () => {
+                let progress = 0;
+                let seconds = 30;
+                
+                processingInterval = setInterval(() => {
+                    progress += 1;
+                    seconds -= 1;
+                    
+                    if (progress > 100) {
+                        clearInterval(processingInterval);
+                        return;
+                    }
+                    
+                    progressBar.style.width = `${progress}%`;
+                    progressPercent.textContent = `${progress}%`;
+                    
+                    const min = Math.floor(seconds / 60);
+                    const sec = seconds % 60;
+                    timeRemaining.textContent = `${min}:${sec < 10 ? '0' + sec : sec}`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(processingInterval);
+                        processingSection.classList.add('hidden');
+                        downloadSection.classList.remove('hidden');
+                        btnText.classList.remove('hidden');
+                        btnLoading.classList.add('hidden');
+                        convertBtn.disabled = false;
+                    }
+                }, 300);
+            };
+            
+            // Convert button click
+            convertBtn.addEventListener('click', () => {
+                if (!selectedFile) return;
+                
+                // Show loading state
+                btnText.classList.add('hidden');
+                btnLoading.classList.remove('hidden');
+                convertBtn.disabled = true;
+                
+                // Show processing section
+                processingSection.classList.remove('hidden');
+                downloadSection.classList.add('hidden');
+                
+                // Simulate processing
+                simulateProcessing();
+            });
+            
+            // Download button click
+            downloadBtn.addEventListener('click', () => {
+                // In a real app, this would download the actual converted file
+                alert('In a real 8D audio converter, this would download your processed file. This is just a UI demo.');
+            });
+            
+            // Preview button click
+            previewBtn.addEventListener('click', () => {
+                // In a real app, this would play a preview of the converted audio
+                alert('In a real 8D audio converter, this would play a preview of your processed file. This is just a UI demo.');
+            });
+            
+            // Donation button click
+            donationBtn.addEventListener('click', () => {
+                mainPage.classList.add('hidden');
+                donationPage.classList.add('active');
+            });
+            
+            // Back button click
+            backBtn.addEventListener('click', () => {
+                donationPage.classList.remove('active');
+                setTimeout(() => {
+                    mainPage.classList.remove('hidden');
+                }, 300);
+            });
+            
+            // Make all "Return to converter" links work
+            document.querySelectorAll('a[href="#"]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    donationPage.classList.remove('active');
+                    setTimeout(() => {
+                        mainPage.classList.remove('hidden');
+                    }, 300);
+                });
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9675269c633a9cf8',t:'MTc1Mzg4MTU5OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
