@@ -15,20 +15,20 @@ def convert_audio():
     if 'file' not in request.files:
         return {'error': 'No file provided'}, 400
 
-    if shutil.which('sox') is None:
-        return {'error': 'SoX is not installed on the server'}, 500
-
     audio_file = request.files['file']
     with tempfile.TemporaryDirectory() as tmpdir:
-        input_path = os.path.join(tmpdir, 'input.wav')
+        ext = os.path.splitext(audio_file.filename)[1]
+        if not ext:
+            ext = '.wav'
+        input_path = os.path.join(tmpdir, 'input' + ext)
         output_path = os.path.join(tmpdir, 'output_8d.wav')
         audio_file.save(input_path)
 
         cmd = [
             'sox', input_path, output_path,
             'remix', '1,2',
+            'phaser', '0.6', '0.66', '3', '0.4', '2', '-t',
             'reverb', '50', '50', '100', '50', '0', '100',
-            'synth', '0.08', 'sine', 'amod', '0.85', 'rate', '44100',
             'gain', '-n'
         ]
 
