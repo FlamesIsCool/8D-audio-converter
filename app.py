@@ -1,52 +1,42 @@
-import os
-import math
-from flask import Flask, request, send_file, render_template
+from flask import Flask, request, send_file
 from pydub import AudioSegment
-from pydub.playback import play
-from pydub.generators import Sine
+import os
+import tempfile
+import subprocess
 
 app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
-OUTPUT_FOLDER = "outputs"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def apply_8d_effect(audio: AudioSegment, frequency: float = 0.08) -> AudioSegment:
-    segment_duration_ms = 100  # Split into chunks of 100ms
-    total_segments = int(len(audio) / segment_duration_ms)
-    new_audio = AudioSegment.silent(duration=0)
+@app.route('/convert', methods=['POST'])
+def convert_to_8d():
+    if 'file' not in request.files:
+        return {'error': 'No file uploaded'}, 400
 
-    for i in range(total_segments):
-        start = i * segment_duration_ms
-        end = start + segment_duration_ms
-        chunk = audio[start:end]
+    file = request.files['file']
+    if file.filename == '':
+        return {'error': 'Empty filename'}, 400
 
-        pan_amount = math.sin(2 * math.pi * frequency * i)
-        chunk = chunk.pan(pan_amount)  # Pans from -1 (left) to +1 (right)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        input_path = os.path.join(tmpdir, 'input.wav')
+        output_path = os.path.join(tmpdir, 'output.wav')
+        
+        # Convert to WAV (if needed)
+        audio = AudioSegment.from_file(file)
+        audio.export(input_path, format='wav')
 
-        new_audio += chunk
+        # Apply 8D effect using SoX
+        # Auto panner: synth panning movement
+        # Reverb: simulate room
+        cmd = [
+            'sox', input_path, output_path,
+            'remix', '1,2',
+            'reverb', '50', '50', '100', '50', '0', '100',
+            'synth', '0.08', 'sine', 'amod', '0.8', 'rate', '44100',
+            'gain', '-n'
+        ]
 
-    return new_audio
+        subprocess.run(cmd, check=True)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    if request.method == "POST":
-        file = request.files["audio"]
-        if file.filename == "":
-            return "No selected file", 400
+        return send_file(output_path, as_attachment=True, download_name='8d_audio.wav')
 
-        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
-        file.save(filepath)
-
-        audio = AudioSegment.from_file(filepath)
-        output = apply_8d_effect(audio)
-
-        output_path = os.path.join(OUTPUT_FOLDER, "8d_" + file.filename)
-        output.export(output_path, format="mp3")
-
-        return send_file(output_path, as_attachment=True)
-
-    return render_template("index.html")
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+if __name__ == '__main__':
+    app.run(debug=True)
